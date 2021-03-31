@@ -1,7 +1,7 @@
 {
   "name": "teslamoonshot-solidity",
   "version": "1.0.0",
-  "description": "TeslaMoonShot - Deflationnary DeFi",
+  "description": "TeslaMoonShot - deflationary DeFi",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
@@ -26,7 +26,7 @@
     "crypto",
     "solidity",
     "defi",
-    "deflationnary"
+    "deflationary"
   ],
   "author": "TeslaMoonShot",
   "license": "ISC",
