@@ -4,6 +4,8 @@ pragma solidity ^0.8.3;
 
 import "./IERC20.sol";
 import "../utils/Context.sol";
+import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
+
 
 
 /**
@@ -55,6 +57,24 @@ contract ERC20 is Context, IERC20 {
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
+
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
+
+        // Create a uniswap pair for this new token
+        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
+            address(this),
+            _uniswapV2Router.WETH()
+        );
+
+        // set the rest of the contract variables
+        uniswapV2Router = _uniswapV2Router;
+
+        //exclude owner and this contract from fee
+        _isExcludedFromFee[owner()] = true;
+        _isExcludedFromFee[address(this)] = true;
+
+        emit Transfer(address(0), _msgSender(), _tTotal);
+
     }
 
     /**
@@ -93,14 +113,15 @@ contract ERC20 is Context, IERC20 {
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public view virtual override returns (uint256) {
-        return _totalSupply;
+        return _tTotal;
     }
 
     /**
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view virtual override returns (uint256) {
-        return _balances[account];
+        if (_isExcluded[account]) return _tOwned[account];
+        return tokenFromReflection(_rOwned[account]);
     }
 
     /**
@@ -214,15 +235,47 @@ contract ERC20 is Context, IERC20 {
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
+        require(amount > 0, "Transfer amount must be greater than zero");
 
-        _beforeTokenTransfer(sender, recipient, amount);
+        if(from != owner() && to != owner())
+            require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
 
-        uint256 senderBalance = _balances[sender];
-        require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
-        _balances[sender] = senderBalance - amount;
-        _balances[recipient] += amount;
+        // is the token balance of this contract address over the min number of
+        // tokens that we need to initiate a swap + liquidity lock?
+        // also, don't get caught in a circular liquidity event.
+        // also, don't swap & liquify if sender is uniswap pair.
+        uint256 contractTokenBalance = balanceOf(address(this));
 
-        emit Transfer(sender, recipient, amount);
+        bool overMinTokenBalance = contractTokenBalance >= minTokensBeforeSwap;
+
+        if (
+            overMinTokenBalance &&
+            !inSwapAndLiquify &&
+            from != uniswapV2Pair &&
+            swapAndLiquifyEnabled
+        ) {
+            //calculate lp rewards
+            uint256 lpRewardAmount = contractTokenBalance.mul(_lpRewardFromLiquidity).div(10**2);
+            //distribute rewards
+            _rewardLiquidityProviders(lpRewardAmount);
+            //add liquidity
+            swapAndLiquify(contractTokenBalance.sub(lpRewardAmount));
+            //burn lp tokens, hence locking the liquidity forever
+            if(BurnLpTokensEnabled)
+                burnLpTokens();
+        }
+
+        //indicates if fee should be deducted from transfer
+        bool takeFee = true;
+
+        //if any account belongs to _isExcludedFromFee account then remove the fee
+        if(_isExcludedFromFee[from] || _isExcludedFromFee[to]){
+            takeFee = false;
+        }
+
+        _tokenTransfer(from,to,amount,takeFee);
+
+
     }
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
