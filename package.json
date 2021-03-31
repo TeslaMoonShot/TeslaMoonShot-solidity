@@ -1,0 +1,54 @@
+{
+  "name": "teslamoonshot-solidity",
+  "version": "1.0.0",
+  "description": "TeslaMoonShot - Deflationnary DeFi",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "test:coverage": "npx truffle run coverage",
+    "lint": "npm run lint:sol && npm run lint:js",
+    "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "lint:js": "eslint \"test/*.js\"",
+    "lint:fix": "npm run lint:fix-sol && npm run lint:fix-js",
+    "lint:fix-sol": "npx prettier --write 'contracts/**/*.sol'",
+    "lint:fix-js": "npx prettier --write '**/*.js'",
+    "build": "truffle build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TeslaMoonShot/TeslaMoonShot-solidity.git"
+  },
+  "keywords": [
+    "erc20",
+    "crypto",
+    "solidity",
+    "defi",
+    "deflationnary"
+  ],
+  "author": "TeslaMoonShot",
+  "license": "ISC",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.0.0",
+    "truffle-flattener": "^1.5.0"
+  },
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.10",
+    "eslint": "^7.23.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.6",
+    "solhint": "^3.3.4",
+    "solhint-plugin-prettier": "^0.0.5",
+    "solidity-coverage": "^0.7.16",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "truffle-plugin-verify": "^0.5.7"
+  },
+  "bugs": {
+    "url": "https://github.com/TeslaMoonShot/TeslaMoonShot-solidity/issues"
+  },
+  "homepage": "https://github.com/TeslaMoonShot/TeslaMoonShot-solidity#readme"
+}
