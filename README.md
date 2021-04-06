@@ -11,7 +11,6 @@
 
 * **Always make sure you are using the right contract address !**
 * You can copy the address from here `0x`
-* Or you can scan the address from the QR code below
 
 
 # What is TeslaMoonShot 🌚 ?
