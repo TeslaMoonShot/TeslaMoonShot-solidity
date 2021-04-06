@@ -1,7 +1,7 @@
 # TeslaMoonShot.sol
 
 <p align="center">
-    <img src="public/img/tesla-moon-shot.png" width="162" height="162">
+    <img src="public/img/tesla-moon-shot.png" height="162">
         <br />
         <b>TeslaMoonShot Protocol</b>
         <br />
