@@ -108,15 +108,15 @@ contract Safe is IERC20, Ownable {
     //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
 
-    function setTaxFeePercent(uint256 taxFee) external onlyOwner() {
+    function setTaxFeePercent(uint8 taxFee) external onlyOwner() {
         _taxFee = taxFee;
     }
 
-    function setBurnFeePercent(uint256 burnFee) external onlyOwner() {
+    function setBurnFeePercent(uint8 burnFee) external onlyOwner() {
         _burnFee = burnFee;
     }
 
-    function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner() {
+    function setLiquidityFeePercent(uint8 liquidityFee) external onlyOwner() {
         _liquidityFee = liquidityFee;
     }
 
