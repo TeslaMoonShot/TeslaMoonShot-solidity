@@ -21,7 +21,7 @@ contract Safe is IERC20, Ownable {
 
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 100_000_000_000;
-    uint256 private _rTotal = (MAX - (MAX % _tTotal));
+    uint256 internal _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
     uint256 private _tBurnTotal;
 
@@ -42,7 +42,7 @@ contract Safe is IERC20, Ownable {
 
     uint256 public _lpRewardFromLiquidity = 1;
 
-    uint256 public _maxTxAmount = 50000 * 10**18;
+    uint256 public _maxTxAmount = 5_000_000;
 
     uint256 public totalLiquidityProviderRewards;
 
@@ -54,7 +54,7 @@ contract Safe is IERC20, Ownable {
 
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = false;
-    uint256 private minTokensBeforeSwap = 8000;
+    uint256 private minTokensBeforeSwap = 10000;
 
     modifier lockTheSwap {
         inSwapAndLiquify = true;
@@ -762,28 +762,28 @@ contract Safe is IERC20, Ownable {
         );
     }
 
-    function calculateTaxFee(uint256 _amount) private view returns (uint256) {
+    function calculateTaxFee(uint256 _amount) internal view returns (uint256) {
         return (_amount * (_taxFee)) / (10**2);
     }
 
-    function calculateBurnFee(uint256 _amount) private view returns (uint256) {
+    function calculateBurnFee(uint256 _amount) internal view returns (uint256) {
         return (_amount * (_burnFee)) / (10**2);
     }
 
     function calculateLiquidityFee(uint256 _amount)
-        private
+        internal
         view
         returns (uint256)
     {
         return (_amount * (_liquidityFee)) / (10**2);
     }
 
-    function _getRate() private view returns (uint256) {
+    function _getRate() internal view returns (uint256) {
         (uint256 rSupply, uint256 tSupply) = _getCurrentSupply();
         return rSupply / (tSupply);
     }
 
-    function _getCurrentSupply() private view returns (uint256, uint256) {
+    function _getCurrentSupply() internal view returns (uint256, uint256) {
         uint256 rSupply = _rTotal;
         uint256 tSupply = _tTotal;
         for (uint256 i = 0; i < _excluded.length; i++) {
@@ -799,7 +799,7 @@ contract Safe is IERC20, Ownable {
     }
 
     function _getValues(uint256 tAmount)
-        private
+        internal
         view
         returns (
             uint256,
@@ -831,7 +831,7 @@ contract Safe is IERC20, Ownable {
     }
 
     function _getTValues(uint256 tAmount)
-        private
+        internal
         view
         returns (
             uint256,
@@ -854,7 +854,7 @@ contract Safe is IERC20, Ownable {
         uint256 tLiquidity,
         uint256 currentRate
     )
-        private
+        internal
         pure
         returns (
             uint256,
