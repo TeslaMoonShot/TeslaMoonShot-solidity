@@ -9,10 +9,5 @@ contract TeslaMoonShot is Safe {
         string memory name_,
         string memory symbol_,
         uint8 decimals_
-    )
-        Safe(
-            name_,
-            symbol_,
-            decimals_
-        ) { }
+    ) Safe(name_, symbol_, decimals_) {}
 }
