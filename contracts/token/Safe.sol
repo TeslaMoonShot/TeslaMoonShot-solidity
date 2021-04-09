@@ -30,19 +30,19 @@ contract Safe is IERC20, Ownable {
     uint8 private _decimals;
 
     //2%
-    uint8 public _taxFee = 2;
-    uint8 private _previousTaxFee = _taxFee;
+    uint8 public taxFee = 5;
+    uint8 private _previousTaxFee = taxFee;
 
     //2%
-    uint8 public _burnFee = 2;
-    uint8 private _previousBurnFee = _burnFee;
+    uint8 public burnFee = 2;
+    uint8 private _previousBurnFee = burnFee;
 
-    uint8 public _liquidityFee = 6;
-    uint8 private _previousLiquidityFee = _liquidityFee;
+    uint8 public liquidityFee = 1;
+    uint8 private _previousLiquidityFee = liquidityFee;
 
-    uint256 public _lpRewardFromLiquidity = 1;
+    uint256 public _lpRewardFromLiquidity = 5;
 
-    uint256 public _maxTxAmount = 5_000_000;
+    uint256 public _maxTxAmount = 5_000_000_000;
 
     uint256 public totalLiquidityProviderRewards;
 
@@ -109,15 +109,15 @@ contract Safe is IERC20, Ownable {
     receive() external payable {}
 
     function setTaxFeePercent(uint8 taxFee) external onlyOwner() {
-        _taxFee = taxFee;
+        taxFee = taxFee;
     }
 
     function setBurnFeePercent(uint8 burnFee) external onlyOwner() {
-        _burnFee = burnFee;
+        burnFee = burnFee;
     }
 
     function setLiquidityFeePercent(uint8 liquidityFee) external onlyOwner() {
-        _liquidityFee = liquidityFee;
+        liquidityFee = liquidityFee;
     }
 
     function setLpRewardFromLiquidityPercent(uint256 percent)
@@ -664,21 +664,21 @@ contract Safe is IERC20, Ownable {
     }
 
     function restoreAllFee() private {
-        _taxFee = _previousTaxFee;
-        _burnFee = _previousBurnFee;
-        _liquidityFee = _previousLiquidityFee;
+        taxFee = _previousTaxFee;
+        burnFee = _previousBurnFee;
+        liquidityFee = _previousLiquidityFee;
     }
 
     function removeAllFee() private {
-        if (_taxFee == 0 && _burnFee == 0 && _liquidityFee == 0) return;
+        if (taxFee == 0 && burnFee == 0 && liquidityFee == 0) return;
 
-        _previousTaxFee = _taxFee;
-        _previousBurnFee = _burnFee;
-        _previousLiquidityFee = _liquidityFee;
+        _previousTaxFee = taxFee;
+        _previousBurnFee = burnFee;
+        _previousLiquidityFee = liquidityFee;
 
-        _taxFee = 0;
-        _burnFee = 0;
-        _liquidityFee = 0;
+        taxFee = 0;
+        burnFee = 0;
+        liquidityFee = 0;
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
@@ -763,11 +763,11 @@ contract Safe is IERC20, Ownable {
     }
 
     function calculateTaxFee(uint256 _amount) internal view returns (uint256) {
-        return (_amount * (_taxFee)) / (10**2);
+        return (_amount * (taxFee)) / (10**2);
     }
 
     function calculateBurnFee(uint256 _amount) internal view returns (uint256) {
-        return (_amount * (_burnFee)) / (10**2);
+        return (_amount * (burnFee)) / (10**2);
     }
 
     function calculateLiquidityFee(uint256 _amount)
@@ -775,7 +775,7 @@ contract Safe is IERC20, Ownable {
         view
         returns (uint256)
     {
-        return (_amount * (_liquidityFee)) / (10**2);
+        return (_amount * (liquidityFee)) / (10**2);
     }
 
     function _getRate() internal view returns (uint256) {
