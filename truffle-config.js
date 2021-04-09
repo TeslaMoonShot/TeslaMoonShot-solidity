@@ -48,6 +48,8 @@ module.exports = {
      network_id: "*",       // Any network (default: none)
      gasPrice: 0,
      gas:450000000,
+     defaultEtherBalance: 5000,
+
     },
     // Another network with more advanced options...
     // advanced: {
