@@ -23,11 +23,10 @@ contract('TeslaMoonShot', ([deployer, user1, user2, user3, user4, user5, user6, 
     let user7Balance;
     let user8Balance;
     let user9Balance;
+    let contractBalance;
 
     before(async () => {
         token = await TeslaMoonShot.deployed();
-        await token.setSwapAndLiquifyEnabled(true);
-        await token.setBurnLpTokenEnabled(true);
         uniswapPair = await token.uniswapV2Pair();
         uniswapV2Router02 = await IUniswapRouter2.at(uniswapRouter2Address);
         await token.approve(uniswapV2Router02.address, 50_000_000_000);
@@ -55,6 +54,9 @@ contract('TeslaMoonShot', ([deployer, user1, user2, user3, user4, user5, user6, 
         user7Balance = await token.balanceOf(user7);
         user8Balance = await token.balanceOf(user8);
         user9Balance = await token.balanceOf(user9);
+        contractBalance = await token.balanceOf(token.address);
+        console.log(contractBalance.toString());
+
     })
 
     it("should return tax fee", async() => {
@@ -104,6 +106,11 @@ contract('TeslaMoonShot', ([deployer, user1, user2, user3, user4, user5, user6, 
         expect((await token.balanceOf(user3)).toString()).to.equal('92000');
 
     });
+    it('test', async() => {
+        console.log((await token.test(100000)).toString());
+        console.log((await token.test(1000000)).toString());
+        console.log((await token.test(10000000)).toString());
+    });
 
     it("should return totalSupply", async() => {
         expect((await token.totalSupply()).toString()).to.equal('99999988000');
@@ -131,63 +138,54 @@ contract('TeslaMoonShot', ([deployer, user1, user2, user3, user4, user5, user6, 
     it('Should swap 2 000 000 TMS with user1', async() => {
         expect(user1Balance.toString()).to.equal('99500029')
         await swapEthForToken(uniswapV2Router02, token, user1, 2000000);
-        const fees = await amountAfterFees(token, '2000000');
         expect((await token.balanceOf(user1)).toString()).to.equal('101340131');
     });
 
     it('Should swap 4 000 000 TMS with user2', async() => {
         expect(user2Balance.toString()).to.equal('360000')
         await swapEthForToken(uniswapV2Router02, token, user2, 4000000);
-        const fees = await amountAfterFees(token, '4000000');
         expect((await token.balanceOf(user2)).toString()).to.equal('4040008');
     });
 
     it('Should swap 8 000 000 TMS with user3', async() => {
         expect(user3Balance.toString()).to.equal('92000')
         await swapEthForToken(uniswapV2Router02, token, user3, 8000000);
-        const fees = await amountAfterFees(token, '8000000');
         expect((await token.balanceOf(user3)).toString()).to.equal('7452030');
     });
 
     it('Should swap 16 000 000 TMS with user4', async() => {
         expect(user4Balance.toString()).to.equal('0')
         await swapEthForToken(uniswapV2Router02, token, user4, 16000000);
-        const fees = await amountAfterFees(token, '16000000');
         expect((await token.balanceOf(user4)).toString()).to.equal('14720117');
     });
 
     it('Should swap 32 000 000 TMS with user5', async() => {
         expect(user5Balance.toString()).to.equal('0')
         await swapEthForToken(uniswapV2Router02, token, user5, 32000000);
-        const fees = await amountAfterFees(token, '32000000');
         expect((await token.balanceOf(user5)).toString()).to.equal('29440471');
     });
 
     it('Should swap 64 000 000 TMS with user6', async() => {
         expect(user6Balance.toString()).to.equal('0')
         await swapEthForToken(uniswapV2Router02, token, user6, 64000000);
-        const fees = await amountAfterFees(token, '64000000');
         expect((await token.balanceOf(user6)).toString()).to.equal('58881884');
     });
 
     it('Should swap 128 000 000 TMS with user7', async() => {
         expect(user7Balance.toString()).to.equal('0')
         await swapEthForToken(uniswapV2Router02, token, user7, 128000000);
-        const fees = await amountAfterFees(token, '128000000');
         expect((await token.balanceOf(user7)).toString()).to.equal('117767537');
     });
 
     it('Should swap 256 000 000 TMS with user8', async() => {
         expect(user8Balance.toString()).to.equal('0')
         await swapEthForToken(uniswapV2Router02, token, user8, 256000000);
-        const fees = await amountAfterFees(token, '256000000');
         expect((await token.balanceOf(user8)).toString()).to.equal('235550153');
     });
 
     it('Should swap 512 000 000 TMS with user9', async() => {
         expect(user9Balance.toString()).to.equal('0')
         await swapEthForToken(uniswapV2Router02, token, user9, 512000000);
-        const fees = await amountAfterFees(token, '512000000');
         expect((await token.balanceOf(user9)).toString()).to.equal('471160641');
     });
 
@@ -198,4 +196,9 @@ contract('TeslaMoonShot', ([deployer, user1, user2, user3, user4, user5, user6, 
     it('should return the total fees', async() => {
         expect((await token.totalFees()).toString()).to.equal('51130000');
     });
+
+    it('should return the total fees', async() => {
+        expect((await token.TotalBurnedLpTokens()).toString()).to.equal('0');
+    });
+
 });
