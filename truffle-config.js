@@ -49,7 +49,6 @@ module.exports = {
      gasPrice: 0,
      gas:450000000,
      defaultEtherBalance: 5000,
-
     },
     // Another network with more advanced options...
     // advanced: {
