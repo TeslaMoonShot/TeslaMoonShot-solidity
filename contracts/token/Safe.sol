@@ -40,30 +40,20 @@ contract Safe is IERC20, Ownable {
     uint8 public liquidityFee = 1;
     uint8 private _previousLiquidityFee = liquidityFee;
 
-    uint256 public _lpRewardFromLiquidity = 5;
+    uint8 public lpRewardFromLiquidity = 5;
 
-    uint256 public _maxTxAmount = 5_000_000_000;
+    uint256 public maxTxAmount = 5_000_000_000;
 
     uint256 public totalLiquidityProviderRewards;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
 
-    bool public BurnLpTokensEnabled = false;
     uint256 public TotalBurnedLpTokens;
 
-    bool inSwapAndLiquify;
-    bool public swapAndLiquifyEnabled = false;
-    uint256 private minTokensBeforeSwap = 10000;
-
-    modifier lockTheSwap {
-        inSwapAndLiquify = true;
-        _;
-        inSwapAndLiquify = false;
-    }
+    uint256 private minTokensBeforeSwap = 1_000_000;
 
     event RewardLiquidityProviders(uint256 tokenAmount);
-    event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(
         uint256 tokensSwapped,
         uint256 ethReceived,
@@ -105,39 +95,35 @@ contract Safe is IERC20, Ownable {
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
 
-    //to recieve ETH from uniswapV2Router when swaping
+    //to receive ETH from uniswapV2Router when swaping
     receive() external payable {}
 
-    function setTaxFeePercent(uint8 taxFee) external onlyOwner() {
-        taxFee = taxFee;
+    function setTaxFeePercent(uint8 _taxFee) external onlyOwner() {
+        taxFee = _taxFee;
     }
 
-    function setBurnFeePercent(uint8 burnFee) external onlyOwner() {
-        burnFee = burnFee;
+    function setBurnFeePercent(uint8 _burnFee) external onlyOwner() {
+        burnFee = _burnFee;
     }
 
-    function setLiquidityFeePercent(uint8 liquidityFee) external onlyOwner() {
-        liquidityFee = liquidityFee;
+    function setLiquidityFeePercent(uint8 _liquidityFee) external onlyOwner() {
+        liquidityFee = _liquidityFee;
     }
 
-    function setLpRewardFromLiquidityPercent(uint256 percent)
+    function setLpRewardFromLiquidityPercent(uint8 _lpRewardFromLiquidity)
         external
         onlyOwner()
     {
-        _lpRewardFromLiquidity = percent;
+        lpRewardFromLiquidity = _lpRewardFromLiquidity;
     }
 
     function setMaxTxPercent(uint256 maxTxPercent, uint256 maxTxDecimals)
         external
         onlyOwner()
     {
-        _maxTxAmount =
+        maxTxAmount =
             (_tTotal * (maxTxPercent)) /
             (10**(uint256(maxTxDecimals) + 2));
-    }
-
-    function setBurnLpTokenEnabled(bool value) external onlyOwner() {
-        BurnLpTokensEnabled = value;
     }
 
     function includeInReward(address account) external onlyOwner() {
@@ -282,11 +268,6 @@ contract Safe is IERC20, Ownable {
         _approve(_msgSender(), spender, currentAllowance - subtractedValue);
 
         return true;
-    }
-
-    function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
-        swapAndLiquifyEnabled = _enabled;
-        emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
 
     function deliver(uint256 tAmount) public {
@@ -451,7 +432,7 @@ contract Safe is IERC20, Ownable {
         require(amount > 0, "Transfer amount must be greater than zero");
         if (from != owner() && to != owner())
             require(
-                amount <= _maxTxAmount,
+                amount <= maxTxAmount,
                 "Transfer amount exceeds the maxTxAmount"
             );
 
@@ -463,21 +444,17 @@ contract Safe is IERC20, Ownable {
 
         bool overMinTokenBalance = contractTokenBalance >= minTokensBeforeSwap;
 
-        if (
-            overMinTokenBalance &&
-            !inSwapAndLiquify &&
-            from != uniswapV2Pair &&
-            swapAndLiquifyEnabled
-        ) {
+
+    if (overMinTokenBalance && from != uniswapV2Pair) {
             //calculate lp rewards
             uint256 lpRewardAmount =
-                (contractTokenBalance * (_lpRewardFromLiquidity)) / (10**2);
+                (contractTokenBalance * (lpRewardFromLiquidity)) / (10**2);
             //distribute rewards
             _rewardLiquidityProviders(lpRewardAmount);
             //add liquidity
             swapAndLiquify(contractTokenBalance - (lpRewardAmount));
             //burn lp tokens, hence locking the liquidity forever
-            if (BurnLpTokensEnabled) burnLpTokens();
+            burnLpTokens();
         }
 
         //indicates if fee should be deducted from transfer
@@ -681,7 +658,24 @@ contract Safe is IERC20, Ownable {
         liquidityFee = 0;
     }
 
-    function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
+
+
+    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
+        // approve token transfer to cover all possible scenarios
+        _approve(address(this), address(uniswapV2Router), tokenAmount);
+
+        // add the liquidity
+        uniswapV2Router.addLiquidityETH{value: ethAmount}(
+            address(this),
+            tokenAmount,
+            0, // slippage is unavoidable
+            0, // slippage is unavoidable
+            address(this),
+            block.timestamp
+        );
+    }
+
+    function swapAndLiquify(uint256 contractTokenBalance) private {
         // split the contract balance into halves
         uint256 half = contractTokenBalance / (2);
         uint256 otherHalf = contractTokenBalance - (half);
@@ -702,21 +696,6 @@ contract Safe is IERC20, Ownable {
         addLiquidity(otherHalf, newBalance);
 
         emit SwapAndLiquify(half, newBalance, otherHalf);
-    }
-
-    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
-        // approve token transfer to cover all possible scenarios
-        _approve(address(this), address(uniswapV2Router), tokenAmount);
-
-        // add the liquidity
-        uniswapV2Router.addLiquidityETH{value: ethAmount}(
-            address(this),
-            tokenAmount,
-            0, // slippage is unavoidable
-            0, // slippage is unavoidable
-            address(this),
-            block.timestamp
-        );
     }
 
     function _takeLiquidity(uint256 tLiquidity) private {
