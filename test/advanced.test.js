@@ -106,11 +106,6 @@ contract('TeslaMoonShot', ([deployer, user1, user2, user3, user4, user5, user6, 
         expect((await token.balanceOf(user3)).toString()).to.equal('92000');
 
     });
-    it('test', async() => {
-        console.log((await token.test(100000)).toString());
-        console.log((await token.test(1000000)).toString());
-        console.log((await token.test(10000000)).toString());
-    });
 
     it("should return totalSupply", async() => {
         expect((await token.totalSupply()).toString()).to.equal('99999988000');
