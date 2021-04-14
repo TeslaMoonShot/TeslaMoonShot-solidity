@@ -12,7 +12,7 @@ contract Safe is IERC20, Ownable {
     mapping(address => uint256) private _rOwned;
     mapping(address => uint256) private _tOwned;
     mapping(address => mapping(address => uint256)) private _allowances;
-    mapping(address => bool) private _isExcluded;
+    mapping(address => bool) private _isExcludedFromRewards;
     mapping(address => bool) private _isExcludedFromFee;
 
     address[] private _excluded;
@@ -29,7 +29,7 @@ contract Safe is IERC20, Ownable {
     string private _symbol;
     uint8 private _decimals;
 
-    //2%
+    //5%
     uint8 public taxFee = 5;
     uint8 private _previousTaxFee = taxFee;
 
@@ -127,12 +127,12 @@ contract Safe is IERC20, Ownable {
     }
 
     function includeInReward(address account) external onlyOwner() {
-        require(_isExcluded[account], "Account is already excluded");
+        require(_isExcludedFromRewards[account], "Account is already excluded");
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
                 _excluded[i] = _excluded[_excluded.length - 1];
                 _tOwned[account] = 0;
-                _isExcluded[account] = false;
+                _isExcludedFromRewards[account] = false;
                 _excluded.pop();
                 break;
             }
@@ -273,7 +273,7 @@ contract Safe is IERC20, Ownable {
     function deliver(uint256 tAmount) public {
         address sender = _msgSender();
         require(
-            !_isExcluded[sender],
+            !_isExcludedFromRewards[sender],
             "Excluded addresses cannot call this function"
         );
         (uint256 rAmount, , , , , , ) = _getValues(tAmount);
@@ -300,11 +300,11 @@ contract Safe is IERC20, Ownable {
     }
 
     function excludeFromReward(address account) public onlyOwner() {
-        require(!_isExcluded[account], "Account is already excluded");
+        require(!_isExcludedFromRewards[account], "Account is already excluded");
         if (_rOwned[account] > 0) {
             _tOwned[account] = tokenFromReflection(_rOwned[account]);
         }
-        _isExcluded[account] = true;
+        _isExcludedFromRewards[account] = true;
         _excluded.push(account);
     }
 
@@ -351,7 +351,7 @@ contract Safe is IERC20, Ownable {
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view override returns (uint256) {
-        if (_isExcluded[account]) return _tOwned[account];
+        if (_isExcludedFromRewards[account]) return _tOwned[account];
         return tokenFromReflection(_rOwned[account]);
     }
 
@@ -399,7 +399,7 @@ contract Safe is IERC20, Ownable {
     }
 
     function isExcludedFromReward(address account) public view returns (bool) {
-        return _isExcluded[account];
+        return _isExcludedFromRewards[account];
     }
 
     function isExcludedFromFee(address account) public view returns (bool) {
@@ -507,13 +507,13 @@ contract Safe is IERC20, Ownable {
     {
         if (!takeFee) removeAllFee();
 
-        if (_isExcluded[sender] && !_isExcluded[recipient]) {
+        if (_isExcludedFromRewards[sender] && !_isExcludedFromRewards[recipient]) {
             _transferFromExcluded(sender, recipient, amount);
-        } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
+        } else if (!_isExcludedFromRewards[sender] && _isExcludedFromRewards[recipient]) {
             _transferToExcluded(sender, recipient, amount);
-        } else if (!_isExcluded[sender] && !_isExcluded[recipient]) {
+        } else if (!_isExcludedFromRewards[sender] && !_isExcludedFromRewards[recipient]) {
             _transferStandard(sender, recipient, amount);
-        } else if (_isExcluded[sender] && _isExcluded[recipient]) {
+        } else if (_isExcludedFromRewards[sender] && _isExcludedFromRewards[recipient]) {
             _transferBothExcluded(sender, recipient, amount);
         } else {
             _transferStandard(sender, recipient, amount);
@@ -702,7 +702,7 @@ contract Safe is IERC20, Ownable {
         uint256 currentRate = _getRate();
         uint256 rLiquidity = tLiquidity * (currentRate);
         _rOwned[address(this)] = _rOwned[address(this)] + (rLiquidity);
-        if (_isExcluded[address(this)])
+        if (_isExcludedFromRewards[address(this)])
             _tOwned[address(this)] = _tOwned[address(this)] + (tLiquidity);
     }
 
