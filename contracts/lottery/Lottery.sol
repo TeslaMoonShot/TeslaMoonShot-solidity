@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.3;
 
-
-
+import "./ILottery.sol";
+import "../access/Ownable.sol";
 
 
 contract Lottery is ILottery, Ownable {
@@ -11,21 +11,21 @@ contract Lottery is ILottery, Ownable {
 
     address[] internal eligibleForLottery;
 
-    address private immutable BurnDContract;
+    address private immutable TokenContract;
     IRandomize private randomizeContract;
 
     uint256 maxPrizePool;
 
-    modifier onlyBurnD {
+    modifier onlyToken {
         require(
-            msg.sender == BurnDContract,
-            "Only BurnD contract can call this function"
+            msg.sender == TokenContract,
+            "Only Token contract can call this function"
         );
         _;
     }
 
-    constructor(address BurnDContract_) {
-        BurnDContract = BurnDContract_;
+    constructor(address TokenContract_) {
+        TokenContract = TokenContract_;
         maxPrizePool = 500 * 1E18;
         randomizeContract = new Randomize();
     }
@@ -53,12 +53,12 @@ contract Lottery is ILottery, Ownable {
         emit UpdatedMaxPrizePool(_oldMaxPrizePool, _maxPrizePool);
     }
 
-    function lottery() external override onlyBurnD {
+    function lottery() external override onlyToken {
         if (getContractBalance() >= maxPrizePool) {
             uint256 length = eligibleForLottery.length;
             uint256 index = randomizeContract.randomize(length);
             if (eligibleForLottery[index] != address(0)) {
-                IERC20(BurnDContract).transfer(
+                IERC20(TokenContract).transfer(
                     eligibleForLottery[index],
                     maxPrizePool
                 );
@@ -72,14 +72,14 @@ contract Lottery is ILottery, Ownable {
         }
     }
 
-    function addToLottery(address account) external override onlyBurnD {
+    function addToLottery(address account) external override onlyToken {
         if (!isEligible(account)) {
             eligibleForLottery.push(account);
         }
         emit AddedToLottery(account);
     }
 
-    function removeFromLottery(address account) external override onlyBurnD {
+    function removeFromLottery(address account) external override onlyToken {
         if (isEligible(account)) {
             uint256 index = _getAccountIndex(account);
             _removeFromEligibility(index);
@@ -92,7 +92,7 @@ contract Lottery is ILottery, Ownable {
     }
 
     function getContractBalance() public view override returns (uint256) {
-        return IERC20(BurnDContract).balanceOf(address(this));
+        return IERC20(TokenContract).balanceOf(address(this));
     }
 
     function isEligible(address account) public view override returns (bool) {
